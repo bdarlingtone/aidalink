@@ -1,0 +1,38 @@
+import asyncio
+from playwright.async_api import async_playwright
+BASE="http://127.0.0.1:8000"; OUT="/home/user/shots"
+async def main():
+    async with async_playwright() as p:
+        b = await p.chromium.launch(); ctx = await b.new_context(viewport={"width":1440,"height":950})
+        pg = await ctx.new_page(); errs=[]
+        pg.on("pageerror", lambda e: errs.append(str(e)))
+        pg.on("console", lambda m: errs.append(m.text) if m.type=="error" else None)
+        await pg.goto(f"{BASE}/login", wait_until="networkidle")
+        await pg.fill("#email","student@aidachilembwe.ac.mw"); await pg.fill("#password","Student@Aida2026")
+        await pg.click("button[type=submit]"); await pg.wait_for_url("**/dashboard"); await pg.wait_for_timeout(1800)
+        await pg.screenshot(path=f"{OUT}/A-dashboard.png", full_page=True)
+        await pg.goto(f"{BASE}/performance", wait_until="networkidle"); await pg.wait_for_timeout(1800)
+        await pg.screenshot(path=f"{OUT}/B-performance.png", full_page=True)
+        await pg.click("button[role=tab]:has-text('By topic')"); await pg.wait_for_timeout(800)
+        await pg.screenshot(path=f"{OUT}/C-performance-topics.png", full_page=True)
+        await pg.goto(f"{BASE}/leaderboard", wait_until="networkidle"); await pg.wait_for_timeout(1200)
+        await pg.screenshot(path=f"{OUT}/D-leaderboard.png", full_page=True)
+        await pg.goto(f"{BASE}/challenge", wait_until="networkidle"); await pg.wait_for_timeout(1200)
+        await pg.screenshot(path=f"{OUT}/E-challenge.png", full_page=True)
+        await pg.goto(f"{BASE}/exams", wait_until="networkidle"); await pg.wait_for_timeout(1200)
+        await pg.screenshot(path=f"{OUT}/F-exams.png", full_page=True)
+        await pg.goto(f"{BASE}/topics/ip-addressing-subnetting", wait_until="networkidle"); await pg.wait_for_timeout(1000)
+        await pg.screenshot(path=f"{OUT}/G-topic-detail.png", full_page=True)
+        await pg.goto(f"{BASE}/terminology", wait_until="networkidle"); await pg.wait_for_timeout(900)
+        await pg.click(".term-card"); await pg.wait_for_timeout(1200)
+        await pg.screenshot(path=f"{OUT}/H-term-modal.png")
+        cmd = await pg.evaluate("localStorage.clear()")
+        await pg.goto(f"{BASE}/login", wait_until="networkidle")
+        await pg.fill("#email","admin@aidachilembwe.ac.mw"); await pg.fill("#password","Admin@Aida2026")
+        await pg.click("button[type=submit]"); await pg.wait_for_url("**/admin"); await pg.wait_for_timeout(2000)
+        await pg.screenshot(path=f"{OUT}/I-admin.png", full_page=True)
+        await pg.click("button[role=tab]:has-text('Students')"); await pg.wait_for_timeout(1200)
+        await pg.screenshot(path=f"{OUT}/J-admin-students.png", full_page=True)
+        print("ERRORS:", errs[:6])
+        await b.close()
+asyncio.run(main())
